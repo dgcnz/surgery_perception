@@ -48,6 +48,9 @@
   <depend>pcl_ros</depend>
   <depend>visualization_msgs</depend>
   <depend>tf_conversions</depend>
+  <depend>mesh_msgs</depend>
+  <depend>mesh_msgs_conversions</depend>
+  <depend>rviz_map_plugin</depend>
   <depend>rviz_visual_tools</depend>
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -14,6 +14,9 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   tf_conversions
   rviz_visual_tools
+  mesh_msgs
+  mesh_msgs_conversions
+  rviz_map_plugin
 )
 find_package(PCL REQUIRED)
 
@@ -112,6 +115,7 @@ include_directories(
 
 ## Declare a cpp executable
  add_executable(perception_node src/perception_node.cpp)
+ add_executable(pointcloud_to_mesh src/pointcloud_to_mesh.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -119,6 +123,7 @@ include_directories(
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(perception_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+ target_link_libraries(pointcloud_to_mesh ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 #############
 ## Install ##
