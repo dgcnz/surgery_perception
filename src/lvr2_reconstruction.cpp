@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-class ReconstructionNode
+class LVR2ReconstructionNode
 {
     using Vec                     = lvr2::BaseVector<float>;
     using PsSurface               = lvr2::PointsetSurface<Vec>;
@@ -31,10 +31,12 @@ class ReconstructionNode
     std::string const mesh_topic  = "lvr2/reconstruction";
 
   public:
-    ReconstructionNode(ros::NodeHandle &nh) : nh_(nh)
+    LVR2ReconstructionNode(ros::NodeHandle &nh) : nh_(nh)
     {
-        cloud_sub_ = nh_.subscribe(
-            cloud_topic, 20, &ReconstructionNode::pointCloud2Callback, this);
+        cloud_sub_ = nh_.subscribe(cloud_topic,
+                                   20,
+                                   &LVR2ReconstructionNode::pointCloud2Callback,
+                                   this);
         mesh_pub_ =
             nh_.advertise<mesh_msgs::MeshGeometryStamped>(mesh_topic, 1);
     }
@@ -180,9 +182,9 @@ class ReconstructionNode
 
 int main(int argc, char *argv[])
 {
-    ros::init(argc, argv, "reconstruction_node");
-    ros::NodeHandle    nh;
-    ReconstructionNode rn(nh);
+    ros::init(argc, argv, "lvr2_reconstruction_node");
+    ros::NodeHandle        nh;
+    LVR2ReconstructionNode rn(nh);
     ros::spin();
     return 0;
 }

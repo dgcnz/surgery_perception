@@ -6,6 +6,7 @@ add_definitions(-std=c++17)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  rospy
   sensor_msgs
   tf
   pcl_msgs
@@ -115,7 +116,7 @@ include_directories(
 
 ## Declare a cpp executable
  add_executable(perception_node src/perception_node.cpp)
- add_executable(pointcloud_to_mesh src/pointcloud_to_mesh.cpp)
+# add_executable(lvr2_reconstruction src/lvr2_reconstruction.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -123,7 +124,7 @@ include_directories(
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(perception_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
- target_link_libraries(pointcloud_to_mesh ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+# target_link_libraries(lvr2_reconstruction ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 #############
 ## Install ##
@@ -135,9 +136,12 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 # install(PROGRAMS
-#   scripts/my_python_script
+#   scripts/poisson_reconstruction.py
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+catkin_install_python(PROGRAMS scripts/poisson_reconstruction.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables and/or libraries for installation
 # install(TARGETS surgery_perception surgery_perception_node
