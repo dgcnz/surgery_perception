@@ -139,8 +139,9 @@ include_directories(
 #   scripts/poisson_reconstruction.py
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
-catkin_install_python(PROGRAMS scripts/poisson_reconstruction.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+catkin_install_python(PROGRAMS
+    scripts/poisson_reconstruction.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark executables and/or libraries for installation

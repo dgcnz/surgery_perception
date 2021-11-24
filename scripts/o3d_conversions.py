@@ -75,86 +75,27 @@ def pointcloud2_to_o3d(ros_cloud):
 
 
 def o3dmesh_to_rvizmarker(o3d_mesh,
-                          id=0,
                           pose=Pose(Point(0.0, 0.0, 0.0),
                                     Quaternion(0, 0, 0, 1)),
                           scale=Vector3(1, 1, 1),
                           header=Header(frame_id='camera_link'),
-                          color=ColorRGBA(0.0, 1.0, 0.0, 0.8)):
+                          color=ColorRGBA(0.0, 0.0, 1.0, 0.8)):
     triangles = np.asarray(o3d_mesh.triangles)
-    vertices = np.asarray(o3d_mesh.vertices)
+    vertices = np.asarray(mesh.vertices)
     points = []
     for t in triangles:
-        for vix in t:
-            points.append(
-                Point(vertices[vix][0], vertices[vix][1], vertices[vix][2]))
+        for i in range(3):
+            points.append(vertices[t[i]])
 
     marker = Marker(ns='o3d',
                     points=points,
                     type=Marker.TRIANGLE_LIST,
                     action=Marker.ADD,
-                    id=id,
-                    lifetime=rospy.Duration(0),
+                    id=int(time.time()),
+                    lifetime=rospy.Duration(),
                     pose=pose,
                     scale=scale,
                     header=header,
                     color=color,
                     frame_locked=False)
     return marker
-
-
-import open3d
-import rospy
-import numpy as np
-import time
-from sensor_msgs.msg import PointCloud2
-from visualization_msgs.msg import Marker
-
-
-def compute_poisson_mesh(pcd):
-    with open3d.utility.VerbosityContextManager(
-            open3d.utility.VerbosityLevel.Debug) as cm:
-        mesh, densities = open3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-            pcd, depth=9, n_threads=8)
-        return mesh
-
-
-def compute_normals(pcd):
-    pcd.normals = open3d.utility.Vector3dVector(np.zeros(
-        (1, 3)))  # invalidate existing normals
-    pcd.estimate_normals()
-    pcd.orient_normals_towards_camera_location()
-    return pcd
-
-
-class PoissonReconstruction:
-    def __init__(self, pointcloud2_topic: str, mesh_topic: str):
-        rospy.Subscriber(pointcloud2_topic, PointCloud2, self.make_mesh)
-        rospy.loginfo("Start")
-        self.pub = rospy.Publisher(mesh_topic, Marker, queue_size=1)
-
-    def make_mesh(self, pc2_cloud):
-        rospy.loginfo("Reading Cloud")
-        cloud = pointcloud2_to_o3d(pc2_cloud)
-        rospy.loginfo("Computing Normals")
-        cloud_with_normals = compute_normals(cloud)
-        rospy.loginfo("Computing Mesh")
-        mesh = compute_poisson_mesh(cloud_with_normals)
-        rospy.loginfo("Publishing Mesh")
-        marker = o3dmesh_to_rvizmarker(mesh)
-        self.pub.publish(marker)
-        # open3d.io.write_triangle_mesh(f"/home/dgcnz/{int(time.time())}.ply", mesh)
-        rospy.loginfo("Done")
-
-
-if __name__ == '__main__':
-    pointcloud2_topic = '/camera/depth_registered/points'
-    mesh_topic = '/open3d/reconstruction'
-    node_name = 'poisson_repointcloud2_to_o3d'
-
-    node = PoissonReconstruction(pointcloud2_topic, mesh_topic)
-    rospy.init_node(node_name, anonymous=True)
-    try:
-        rospy.spin()
-    except rospy.ROSInterruptException:
-        pass
