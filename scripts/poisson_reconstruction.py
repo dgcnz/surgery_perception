@@ -75,12 +75,13 @@ def pointcloud2_to_o3d(ros_cloud):
 
 
 def o3dmesh_to_rvizmarker(o3d_mesh,
+                          frame_id,
                           id=0,
                           pose=Pose(Point(0.0, 0.0, 0.0),
                                     Quaternion(0, 0, 0, 1)),
                           scale=Vector3(1, 1, 1),
-                          header=Header(frame_id='camera_link'),
                           color=ColorRGBA(0.0, 1.0, 0.0, 0.8)):
+    header = Header(frame_id=frame_id)
     triangles = np.asarray(o3d_mesh.triangles)
     vertices = np.asarray(o3d_mesh.vertices)
     points = []
@@ -115,7 +116,7 @@ def compute_poisson_mesh(pcd):
     with open3d.utility.VerbosityContextManager(
             open3d.utility.VerbosityLevel.Debug) as cm:
         mesh, densities = open3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-            pcd, depth=9, n_threads=8)
+            pcd, depth=6, n_threads=8)
         return mesh
 
 
@@ -135,13 +136,15 @@ class PoissonReconstruction:
 
     def make_mesh(self, pc2_cloud):
         rospy.loginfo("Reading Cloud")
+        rospy.loginfo(pc2_cloud.header.frame_id)
         cloud = pointcloud2_to_o3d(pc2_cloud)
+        cloud = cloud.voxel_down_sample(voxel_size=0.05)
         rospy.loginfo("Computing Normals")
         cloud_with_normals = compute_normals(cloud)
         rospy.loginfo("Computing Mesh")
         mesh = compute_poisson_mesh(cloud_with_normals)
         rospy.loginfo("Publishing Mesh")
-        marker = o3dmesh_to_rvizmarker(mesh)
+        marker = o3dmesh_to_rvizmarker(mesh, pc2_cloud.header.frame_id)
         self.pub.publish(marker)
         # open3d.io.write_triangle_mesh(f"/home/dgcnz/{int(time.time())}.ply", mesh)
         rospy.loginfo("Done")
