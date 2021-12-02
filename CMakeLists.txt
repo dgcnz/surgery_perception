@@ -9,17 +9,10 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   tf
-  pcl_msgs
-  pcl_ros
-  pcl_conversions
   visualization_msgs
   tf_conversions
-  rviz_visual_tools
-  mesh_msgs
-  mesh_msgs_conversions
-  rviz_map_plugin
 )
-find_package(PCL REQUIRED)
+# find_package(PCL REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -106,7 +99,6 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -115,7 +107,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
- add_executable(perception_node src/perception_node.cpp)
+# add_executable(perception_node src/perception_node.cpp)
 # add_executable(lvr2_reconstruction src/lvr2_reconstruction.cpp)
 
 ## Add cmake target dependencies of the executable/library
@@ -123,7 +115,7 @@ include_directories(
 # add_dependencies(surgery_perception_node surgery_perception_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(perception_node ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+# target_link_libraries(perception_node ${catkin_LIBRARIES})
 # target_link_libraries(lvr2_reconstruction ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 #############
