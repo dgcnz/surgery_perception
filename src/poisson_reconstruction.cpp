@@ -1,104 +1,130 @@
-// #include <mesh_msgs/MeshGeometryStamped.h>
-// #include <mesh_msgs_conversions/conversions.h>
-// #include <pcl/surface/poisson.h>
-// #include <ros/ros.h>
-//
-// void compute(const pcl::PCLPointCloud2::ConstPtr &input,
-//              PolygonMesh &                        output,
-//              int                                  depth,
-//              int                                  solver_divide,
-//              int                                  iso_divide,
-//              float                                point_weight)
-// {
-//     PointCloud<PointNormal>::Ptr xyz_cloud(new
-//     pcl::PointCloud<PointNormal>()); fromPCLPointCloud2(*input, *xyz_cloud);
-//
-//     print_info("Using parameters: depth %d, solverDivide %d, isoDivide %d\n",
-//                depth,
-//                solver_divide,
-//                iso_divide);
-//
-//     Poisson<PointNormal> poisson;
-//     poisson.setDepth(depth);
-//     poisson.setSolverDivide(solver_divide);
-//     poisson.setIsoDivide(iso_divide);
-//     poisson.setPointWeight(point_weight);
-//     poisson.setInputCloud(xyz_cloud);
-//
-//     TicToc tt;
-//     tt.tic();
-//     print_highlight("Computing ...");
-//     poisson.reconstruct(output);
-//
-//     print_info("[Done, ");
-//     print_value("%g", tt.toc());
-//     print_info(" ms]\n");
-// }
-//
-// class PoissonReconstructionNode
-// {
-//     std::string const cloud_topic = "camera/depth_registered/points";
-//     // std::string const mesh_topic  = "poisson/reconstruction";
-//
-//     PoissonReconstructionNode(ros::NodeHandle &nh) : nh_(nh)
-//     {
-//         cloud_sub_ =
-//             nh_.subscribe(cloud_topic,
-//                           20,
-//                           &PoissonReconstructionNode::pointCloud2Callback,
-//                           this);
-//         // mesh_pub_ =
-//         nh_.advertise<mesh_msgs::MeshGeometryStamped>(mesh_topic,
-//         // 1);
-//     }
-//
-//   private:
-//     ros::NodeHandle nh_;
-//     ros::Subscriber cloud_sub_;
-//     // ros::Publisher     mesh_pub_;
-//     ros::ServiceServer service_;
-//
-//     void pointCloud2Callback(sensor_msgs::PointCloud2::ConstPtr const &cloud)
-//     {
-//         mesh_msgs::MeshGeometryStamped mesh_msg;
-//         createMeshGeometryMessage(*cloud, mesh_msg);
-//         // mesh_pub_.publish(mesh_msg);
-//     }
-//     bool createMeshGeometryMessage(sensor_msgs::PointCloud2 const &cloud,
-//                                    mesh_msgs::MeshGeometryStamped &mesh_msg)
-//     {
-//         lvr2::MeshBufferPtr            mesh_buffer_ptr(new lvr2::MeshBuffer);
-//         pcl::PointCloud<pcl::PointXYZ> pcl_cloud;
-//         pcl::fromROSMsg(cloud, pcl_cloud);
-//
-//         // jeje xd
-//         // diego me la chupa
-//         if (!createMeshGeometry(pcl_cloud, jeje xd ))
-//         {
-//             ROS_ERROR_STREAM("Reconstruction Failed!");
-//             return false;
-//         }
-//         if (!mesh_msgs_conversions::fromMeshBufferToMeshGeometryMessage(
-//                 mesh_buffer_ptr, mesh_msg.mesh_geometry))
-//         {
-//
-//             ROS_ERROR_STREAM("Could not convert point cloud from mesh_buffer
-//             "
-//                              "to Geometry Message!");
-//             return false;
-//         }
-//         mesh_msg.header.frame_id = cloud.header.frame_id;
-//         mesh_msg.header.stamp    = cloud.header.stamp;
-//         mesh_msg.uuid            = std::to_string(cloud.header.seq);
-//         return true;
-//     }
-// };
-//
-// int main(int argc, char *argv[])
-// {
-//     ros::init(argc, argv, "poisson_reconstruction_node");
-//     ros::NodeHandle           nh;
-//     PoissonReconstructionNode rn(nh);
-//     ros::spin();
-//     return 0;
-// }
+#include <geometry_msgs/Point.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Quaternion.h>
+#include <geometry_msgs/Vector3.h>
+#include <open3d/Open3D.h>
+#include <open3d_conversions/open3d_conversions.h>
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <std_msgs/ColorRGBA.h>
+#include <std_msgs/Header.h>
+#include <visualization_msgs/Marker.h>
+
+void Open3DMeshToROS(std::shared_ptr<open3d::geometry::TriangleMesh> &mesh,
+                     visualization_msgs::Marker &triangle_list_marker, int id,
+                     std_msgs::Header header, geometry_msgs::Pose pose,
+                     geometry_msgs::Vector3 scale, std_msgs::ColorRGBA color) {
+
+  int m = mesh->triangles_.size();
+  std::vector<geometry_msgs::Point> points(m * 3);
+  for (int i = 0; i < m; ++i) {
+    auto triangle = mesh->triangles_[i];
+    for (int j = 0; j < 3; ++j) {
+      auto v = mesh->vertices_[triangle[j]];
+      points[3 * i + j].x = v[0];
+      points[3 * i + j].y = v[1];
+      points[3 * i + j].z = v[2];
+    }
+  }
+  triangle_list_marker.header = header;
+  triangle_list_marker.ns = "o3d";
+  triangle_list_marker.id = id;
+  triangle_list_marker.type = visualization_msgs::Marker::TRIANGLE_LIST;
+  triangle_list_marker.action = visualization_msgs::Marker::ADD;
+  triangle_list_marker.pose = pose;
+  triangle_list_marker.scale = scale;
+  triangle_list_marker.color = color;
+  triangle_list_marker.points = points;
+}
+
+class PoissonReconstructionNode {
+  std::string const cloud_topic = "camera/depth_registered/points";
+  std::string const o3dcloud_topic = "o3d/points";
+  std::string const mesh_topic = "poisson/reconstruction";
+
+public:
+  PoissonReconstructionNode(ros::NodeHandle &nh) : nh_(nh) {
+    cloud_sub_ = nh_.subscribe(
+        cloud_topic, 1, &PoissonReconstructionNode::pointCloud2Callback, this);
+    mesh_pub_ = nh_.advertise<visualization_msgs::Marker>(mesh_topic, 1);
+    o3dcloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(o3dcloud_topic, 1);
+  }
+
+private:
+  ros::NodeHandle nh_;
+  ros::Subscriber cloud_sub_;
+  ros::Publisher mesh_pub_;
+  ros::Publisher o3dcloud_pub_;
+
+  void pointCloud2Callback(sensor_msgs::PointCloud2::ConstPtr const &cloud) {
+    visualization_msgs::Marker triangle_list_marker;
+    createMeshTriangleList(cloud, triangle_list_marker);
+    mesh_pub_.publish(triangle_list_marker);
+  }
+
+  void
+  createMeshTriangleList(sensor_msgs::PointCloud2::ConstPtr const &cloud,
+                         visualization_msgs::Marker &triangle_list_marker) {
+
+    open3d::geometry::PointCloud o3d_cloud;
+    std::shared_ptr<open3d::geometry::TriangleMesh> mesh;
+    std::vector<double> densities;
+    ROS_INFO("Converting ROS PC2 to open3d");
+    open3d_conversions::rosToOpen3d(cloud, o3d_cloud);
+
+    o3d_cloud.RemoveNonFinitePoints();
+
+    ROS_INFO("Normals Estimation");
+    o3d_cloud.EstimateNormals();
+    ROS_INFO("Normals Orientation");
+    o3d_cloud.OrientNormalsTowardsCameraLocation();
+
+    // sensor_msgs::PointCloud2 new_ros_cloud;
+    // open3d_conversions::open3dToRos(o3d_cloud, new_ros_cloud,
+    //                                 cloud->header.frame_id);
+    // o3dcloud_pub_.publish(new_ros_cloud);
+
+    ROS_INFO("Computing Mesh");
+
+    open3d::utility::VerbosityContextManager cm(
+        open3d::utility::VerbosityLevel::Debug);
+    cm.Enter();
+    std::tie(mesh, densities) =
+        open3d::geometry::TriangleMesh::CreateFromPointCloudPoisson(
+            o3d_cloud, 5, 0, 1.1f, false, 8);
+    cm.Exit();
+
+    ROS_INFO("COMPUTED MESH");
+    /* Setting Message attributes */
+    std_msgs::Header header;
+    header.stamp = cloud->header.stamp;
+    header.frame_id = cloud->header.frame_id;
+
+    geometry_msgs::Point position;
+    position.x = 0.0, position.y = 0.0, position.z = 0.0;
+
+    geometry_msgs::Quaternion orientation;
+    orientation.x = 0.0, orientation.y = 0.0, orientation.z = 0.0,
+    orientation.w = 1.0;
+
+    geometry_msgs::Pose pose;
+    pose.position = position, pose.orientation = orientation;
+
+    geometry_msgs::Vector3 scale;
+    scale.x = 1.0, scale.y = 1.0, scale.z = 1.0;
+
+    std_msgs::ColorRGBA color;
+    color.r = 0.0, color.g = 1.0, color.b = 0.0, color.a = 0.8;
+
+    ROS_INFO("Building Message");
+    Open3DMeshToROS(mesh, triangle_list_marker, 0, header, pose, scale, color);
+  }
+};
+
+int main(int argc, char *argv[]) {
+  ros::init(argc, argv, "poisson_reconstruction");
+  ros::NodeHandle nh;
+  PoissonReconstructionNode rn(nh);
+  ros::spin();
+  return 0;
+}
