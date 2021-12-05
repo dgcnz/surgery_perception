@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   visualization_msgs
   tf2
+  tf2_ros
   tf2_eigen
   open3d_conversions
   message_filters
@@ -34,6 +35,10 @@ DEPENDS Open3D
 add_executable(poisson_reconstruction src/poisson_reconstruction.cpp)
 target_link_libraries(poisson_reconstruction ${catkin_LIBRARIES} ${Open3D_LIBRARIES})
 target_include_directories(poisson_reconstruction PUBLIC ${Open3D_INCLUDE_DIRS})
+
+add_executable(global_registration src/global_registration.cpp)
+target_link_libraries(global_registration ${catkin_LIBRARIES} ${Open3D_LIBRARIES})
+target_include_directories(global_registration PUBLIC ${Open3D_INCLUDE_DIRS})
 
 
 # add_executable(perception_node src/perception_node.cpp)
