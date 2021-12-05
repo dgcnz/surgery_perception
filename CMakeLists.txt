@@ -12,9 +12,10 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   geometry_msgs
   visualization_msgs
-  tf
-  tf_conversions
+  tf2
+  tf2_eigen
   open3d_conversions
+  message_filters
 )
 
 # find_package(PCL REQUIRED)

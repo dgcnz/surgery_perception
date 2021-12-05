@@ -14,7 +14,6 @@ void Open3DMeshToROS(std::shared_ptr<open3d::geometry::TriangleMesh> &mesh,
                      visualization_msgs::Marker &triangle_list_marker, int id,
                      std_msgs::Header header, geometry_msgs::Pose pose,
                      geometry_msgs::Vector3 scale, std_msgs::ColorRGBA color) {
-
   int m = mesh->triangles_.size();
   std::vector<geometry_msgs::Point> points(m * 3);
   for (int i = 0; i < m; ++i) {
@@ -74,15 +73,12 @@ private:
 
     o3d_cloud.RemoveNonFinitePoints();
 
-    ROS_INFO("Normals Estimation");
-    o3d_cloud.EstimateNormals();
-    ROS_INFO("Normals Orientation");
-    o3d_cloud.OrientNormalsTowardsCameraLocation();
-
-    // sensor_msgs::PointCloud2 new_ros_cloud;
-    // open3d_conversions::open3dToRos(o3d_cloud, new_ros_cloud,
-    //                                 cloud->header.frame_id);
-    // o3dcloud_pub_.publish(new_ros_cloud);
+    if (not o3d_cloud.HasNormals()) {
+      ROS_INFO("Normals Estimation");
+      o3d_cloud.EstimateNormals();
+      ROS_INFO("Normals Orientation");
+      o3d_cloud.OrientNormalsTowardsCameraLocation();
+    }
 
     ROS_INFO("Computing Mesh");
 
