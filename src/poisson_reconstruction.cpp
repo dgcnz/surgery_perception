@@ -37,8 +37,7 @@ void Open3DMeshToROS(std::shared_ptr<open3d::geometry::TriangleMesh> &mesh,
 }
 
 class PoissonReconstructionNode {
-  std::string const cloud_topic = "camera/depth_registered/points";
-  std::string const o3dcloud_topic = "o3d/points";
+  std::string const cloud_topic = "static_registration/aligned_points";
   std::string const mesh_topic = "poisson/reconstruction";
 
 public:
@@ -46,14 +45,12 @@ public:
     cloud_sub_ = nh_.subscribe(
         cloud_topic, 1, &PoissonReconstructionNode::pointCloud2Callback, this);
     mesh_pub_ = nh_.advertise<visualization_msgs::Marker>(mesh_topic, 1);
-    o3dcloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(o3dcloud_topic, 1);
   }
 
 private:
   ros::NodeHandle nh_;
   ros::Subscriber cloud_sub_;
   ros::Publisher mesh_pub_;
-  ros::Publisher o3dcloud_pub_;
 
   void pointCloud2Callback(sensor_msgs::PointCloud2::ConstPtr const &cloud) {
     visualization_msgs::Marker triangle_list_marker;

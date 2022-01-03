@@ -1,0 +1,4 @@
+<launch>
+
+<node pkg="tf2_ros" type="static_transform_publisher" name="astra_broadcaster" args="0.66049106 -0.0101487 0.25830009 0.02836353 -0.39949605 -0.05189583 0.91482525 camera_01_rgb_optical_frame camera_02_rgb_optical_frame" />
+</launch>

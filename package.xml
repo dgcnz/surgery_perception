@@ -25,6 +25,7 @@
   <depend>message_filters</depend>
   <depend>open3d_conversions</depend>
   <depend>eigen</depend>
+  <depend>roslaunch</depend>
   <export>
   </export>
 </package>

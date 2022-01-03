@@ -17,11 +17,14 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_eigen
   open3d_conversions
   message_filters
+  roslaunch
 )
 
 # find_package(PCL REQUIRED)
 find_package(Eigen3 REQUIRED) 
 find_package(Open3D REQUIRED)
+# find_package(catkin REQUIRED COMPONENTS roslaunch)
+# roslaunch_add_file_check(launch)
 
 include_directories(${EIGEN3_INCLUDE_DIR}) 
 include_directories(${Open3D_LIBRARY_DIRS})
@@ -40,6 +43,9 @@ add_executable(global_registration src/global_registration.cpp)
 target_link_libraries(global_registration ${catkin_LIBRARIES} ${Open3D_LIBRARIES})
 target_include_directories(global_registration PUBLIC ${Open3D_INCLUDE_DIRS})
 
+add_executable(static_registration src/static_registration.cpp)
+target_link_libraries(static_registration ${catkin_LIBRARIES} ${Open3D_LIBRARIES})
+target_include_directories(static_registration PUBLIC ${Open3D_INCLUDE_DIRS})
 
 # add_executable(perception_node src/perception_node.cpp)
 # add_executable(lvr2_reconstruction src/lvr2_reconstruction.cpp)
@@ -47,8 +53,8 @@ target_include_directories(global_registration PUBLIC ${Open3D_INCLUDE_DIRS})
 # target_link_libraries(lvr2_reconstruction ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 
 
-# catkin_install_python(PROGRAMS
-#     scripts/poisson_reconstruction.py
-#     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+    scripts/initial_registration.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
