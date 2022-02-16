@@ -1,0 +1,53 @@
+version: '3.0'
+networks:
+  ros:
+    driver: bridge
+
+services:
+  ros-master:
+    image: ros:noetic
+    command: stdbuf -o L roscore
+    networks:
+      - ros
+    restart: always
+    logging:
+        driver: none
+
+  ros-astra-camera:
+    build:
+      context: ros_astra_camera
+      dockerfile: Dockerfile
+    depends_on:
+      - ros-master
+    volumes:
+      - "./camera_info:/root/.ros/camera_info"
+    environment:
+      - "ROS_MASTER_URI=http://ros-master:11311"
+    privileged: true
+    command: roslaunch astra_camera embedded_s.launch
+    networks:
+      - ros
+    logging:
+        driver: none
+
+  ros-rviz:
+    image: osrf/ros:noetic-desktop-full
+    depends_on:
+      - ros-master
+      - ros-astra-camera
+    environment:
+      - "ROS_MASTER_URI=http://ros-master:11311"
+      - "DISPLAY=$DISPLAY"
+      - "QT_X11_NO_MITSHM=1"
+    devices:
+      - "/dev/dri:/dev/dri"
+    volumes:
+      - "$HOME/.Xauthority:/root/.Xauthority:rw" 
+      - "/tmp/.X11-unix:/tmp/.X11-unix"
+    group_add:
+      - video
+    command: rosrun rviz rviz
+    networks:
+      - ros
+    logging:
+        driver: none

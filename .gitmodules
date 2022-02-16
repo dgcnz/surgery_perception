@@ -1,0 +1,3 @@
+[submodule "ros_astra_camera"]
+	path = ros_astra_camera
+	url = git@github.com:dgcnz/ros_astra_camera.git
